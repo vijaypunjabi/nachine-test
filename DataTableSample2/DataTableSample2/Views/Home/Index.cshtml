@@ -1,0 +1,102 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<link href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.min.css" rel="stylesheet"/>
+
+<script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+<input type="text" id="txtProductId" placeholder="Product Id" style="display:none;" />
+<input type="text" id="txtProductName" placeholder="Product Name" style="margin-right: 5px;" />
+<input type="text" id="txtCategoryId" placeholder="Category Id" style="margin-right: 5px;" />
+<input type="text" id="txtCategoryName" placeholder="Category Name" style="margin-right: 5px;" />
+
+<button id="btnSave" class="btn btn-success" style="margin-right:5px;">Save </button>
+<button id="btnAddNew" class="btn btn-primary" style="margin-right:5px;">Add New Product </button>
+<br />
+<br />
+
+<table id="tblProducts" class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>Product Id</th>
+            <th>Product Name</th>
+            <th>Category Id</th>
+            <th>Category Name</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script type="text/javascript">
+    $(document).ready(function ()
+    {
+        $('#tblProducts').DataTable({
+            "ajax": {
+                "url": '/api/Products',
+                "dataSrc": ''
+            },
+            columns: [
+                { data: 'ProductId' },
+                { data: 'ProductName' },
+                { data: 'CategoryId' },
+                { data: 'CategoryName' },
+                {
+                    data: "id", render: function (data, type, row, meta) {
+                        return "<button class='btn btn-primary' style='margin-right:5px; onClick=Edit(" + JSON.stringify(row) + ")'>Edit</button>" +
+                            "<button class='btn btn-danger' style='margin-right:5px; onClick=Delete(" + JSON.stringify(row) + ")'>Delete</button>";
+                    }
+                },
+            ]
+        });
+
+        $("#btnSave").click(function () {
+            var product = {
+                ProductId: $.trim($("#txtProductId").val()) == "" ? 0 : $("#txtProductId").val(),
+                ProductName: $("#txtProductName").val(),
+                CategoryId: $("#txtCategoryId").val(),
+                CategoryName: $("#txtCategoryName").val()
+            };
+
+            $.post("api/Products", { product: product })
+                .done(function (data) {
+                    Reset();
+                    ReloadGrid();
+                    alert("saved");
+                });
+        });
+
+        $("#btnAddNew").click(function () {
+            Reset();
+        });
+    });
+
+    function Edit(oProduct) {
+        $("#txtProductId").val(oProduct.ProductId);
+        $("#txtProductName").val(oProduct.ProductName);
+        $("#txtCategoryId").val(oProduct.CategoryId);
+        $("#txtCategoryName").val(oProduct.CategoryName);
+    }
+
+    function Delete(oProduct) {
+        $.ajax({
+            url: "api/Products/" + oProduct.ProductId,
+            type: 'DELETE',
+            success: function (result) {
+                alert("Deleted");
+                ReloadGrid();
+            }
+        });
+    }
+    function Reset() {
+        $('#txtProductId').val(0);
+        $('#txtProductName').val("");
+        $('#txtCategoryId').val("");
+        $('#txtCategoryName').val("");
+    }
+    function ReloadGrid() {
+        $("#tblProducts").DataTable().clear();
+        $("#tblProducts").DataTable().ajax.reload();
+    }
+</script>
